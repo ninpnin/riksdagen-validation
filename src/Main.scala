@@ -18,25 +18,19 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     println("Lets validate lets goo")
-    println("Args " + args(0) + " " + args(1))
-    val results = validate(args(0), args(1))
-
+    val results = validate(args.drop(1), args.head)
     println(results)
   }
 
-  def validate(xmlFile:String,xsdFile:String): Unit ={
-    println("We are in the validation function now")
+  def validate(xmlFiles: Array[String], xsdFile: String): Unit ={
     var exceptions = List[String]()
     try {
-      println("pt1")
       val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
       //val url = this.getClass().getResource(xsdFile)//ClassLoader.getSystemResource(xsdFile)
       val url = new URL("file://" + System.getProperty("user.dir") + "/" + xsdFile)
-      println(xsdFile, url)
+      println("Schema:" + url)
       val streamSource = new StreamSource(url.openStream())
-      println("pt1.5")
       val schema: Schema = schemaFactory.newSchema(streamSource)
-      println("pt2")
 
       val validator: Validator = schema.newValidator()
       validator.setErrorHandler(new ErrorHandler() {
@@ -55,15 +49,20 @@ object Main {
         }
       });
 
-      val xmlUrl = new URL("file://" + System.getProperty("user.dir") + "/" + xmlFile) // ClassLoader.getSystemResource(xmlFile)
-      validator.validate(new StreamSource(xmlUrl.openStream()))
-      exceptions.foreach(e=>{
-        println(e)
-      })
+      for (xmlFile <- xmlFiles) {
+        println("Validate:" + xmlFile)
+        exceptions = List[String]()
+        val xmlUrl = new URL("file://" + System.getProperty("user.dir") + "/" + xmlFile) // ClassLoader.getSystemResource(xmlFile)
+        validator.validate(new StreamSource(xmlUrl.openStream()))
+        exceptions.foreach(e=>{
+          println(e)
+        })
+        println("Number of exceptions " + exceptions.length)
+      }
     } catch {
       case ex => {
-        println("Exception??")
-        ex.getMessage
+        println("Exception in the validation??")
+        println("Exception message" + ex.getMessage)
       }
     }
   }
