@@ -11,12 +11,16 @@ import javax.xml.XMLConstants
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.{Schema, SchemaFactory, Validator}
 import org.xml.sax.{ErrorHandler, SAXParseException}
+import java.net.URL 
+
 
 object Main {
 
   def main(args: Array[String]): Unit = {
     println("Lets validate lets goo")
-    val results = validate("test-broken.xml","test.xsd")
+    println("Args " + args(0) + " " + args(1))
+    val results = validate(args(0), args(1))
+
     println(results)
   }
 
@@ -26,10 +30,12 @@ object Main {
     try {
       println("pt1")
       val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-      val url = ClassLoader.getSystemResource(xsdFile)
-      println("pt1.4")
-      println(url)
-      val schema: Schema = schemaFactory.newSchema(new StreamSource(url.openStream()))
+      //val url = this.getClass().getResource(xsdFile)//ClassLoader.getSystemResource(xsdFile)
+      val url = new URL("file://" + System.getProperty("user.dir") + "/" + xsdFile)
+      println(xsdFile, url)
+      val streamSource = new StreamSource(url.openStream())
+      println("pt1.5")
+      val schema: Schema = schemaFactory.newSchema(streamSource)
       println("pt2")
 
       val validator: Validator = schema.newValidator()
@@ -49,7 +55,7 @@ object Main {
         }
       });
 
-      val xmlUrl = ClassLoader.getSystemResource(xmlFile)
+      val xmlUrl = new URL("file://" + System.getProperty("user.dir") + "/" + xmlFile) // ClassLoader.getSystemResource(xmlFile)
       validator.validate(new StreamSource(xmlUrl.openStream()))
       exceptions.foreach(e=>{
         println(e)
