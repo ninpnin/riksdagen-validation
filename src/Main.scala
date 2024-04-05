@@ -23,8 +23,8 @@ object Main {
     println(results)
   }
 
+
   def validate(xmlFiles: Array[String], xsdFile: String): Unit ={
-    var filesWithExceptions = 0
     var exceptions = List[String]()
     try {
       val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
@@ -34,7 +34,7 @@ object Main {
       val streamSource = new StreamSource(url.openStream())
       val schema: Schema = schemaFactory.newSchema(streamSource)
 
-      val validator: Validator = schema.newValidator()
+      val validator = schema.newValidator()
       validator.setErrorHandler(new ErrorHandler() {
         @Override
         def warning(exception:SAXParseException){
@@ -51,27 +51,32 @@ object Main {
         }
       });
 
-      for (xmlFile <- xmlFiles) {
+      def validateFile(xmlFile: String) = {
         println("Validate:" + xmlFile)
         exceptions = List[String]()
         val xmlUrl = new URL("file://" + System.getProperty("user.dir") + "/" + xmlFile) // ClassLoader.getSystemResource(xmlFile)
         validator.validate(new StreamSource(xmlUrl.openStream()))
-        exceptions.foreach(e=>{
-          println(e)
-        })
-        filesWithExceptions = filesWithExceptions + min(1, exceptions.length)
+        exceptions.foreach(println(_))
         println("Number of exceptions " + exceptions.length)
+        (xmlFile, exceptions.length)
       }
+      val results = for (xmlFile <- xmlFiles) yield validateFile(xmlFile)
+      val resultMap = results.toMap
+      val filesWithExceptions = resultMap.filter(_._2 >= 1).toVector
+      if (filesWithExceptions.length == 0) {
+        println("All files adhere to the schema")
+      } else {
+        println("Out of the " + xmlFiles.length + " files " + filesWithExceptions.length + " do not adhere to the schema")
+        val exceptionDescriptions = filesWithExceptions.map(x =>  x._1 + ": " + x._2 + " errors")
+        val exceptionDescription = exceptionDescriptions.reduceLeft(_ + "\n" + _)
+        println(exceptionDescription)
+      }
+
     } catch {
       case ex => {
         println("Exception in the validation??")
         println("Exception message" + ex.getMessage)
       }
-    }
-    if (filesWithExceptions == 0) {
-      println("All " + xmlFiles.length + " files adhered to the provided schema (" + xsdFile + ")")
-    } else {
-      println("Out of the " + xmlFiles.length + " files, " + filesWithExceptions + " did not adhere to the provided schema (" + xsdFile + ")")
     }
   }
 
