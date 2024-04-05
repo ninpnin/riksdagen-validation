@@ -1,5 +1,6 @@
 package main
 import scalatags.Text.all._
+import scala.math.min
 import mainargs.{main, ParserForMethods}
 /*
 object Main {
@@ -23,6 +24,7 @@ object Main {
   }
 
   def validate(xmlFiles: Array[String], xsdFile: String): Unit ={
+    var filesWithExceptions = 0
     var exceptions = List[String]()
     try {
       val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
@@ -57,6 +59,7 @@ object Main {
         exceptions.foreach(e=>{
           println(e)
         })
+        filesWithExceptions = filesWithExceptions + min(1, exceptions.length)
         println("Number of exceptions " + exceptions.length)
       }
     } catch {
@@ -64,6 +67,11 @@ object Main {
         println("Exception in the validation??")
         println("Exception message" + ex.getMessage)
       }
+    }
+    if (filesWithExceptions == 0) {
+      println("All " + xmlFiles.length + " files adhered to the provided schema (" + xsdFile + ")")
+    } else {
+      println("Out of the " + xmlFiles.length + " files, " + filesWithExceptions + " did not adhere to the provided schema (" + xsdFile + ")")
     }
   }
 
